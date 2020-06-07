@@ -2,17 +2,26 @@ import React, { useState, useEffect }  from 'react';
 import Constants from 'expo-constants';
 import { Feather as Icon } from '@expo/vector-icons';
 import { View, StyleSheet, Image, TouchableOpacity, Text, ScrollView, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { SvgUri } from 'react-native-svg';
 import api from '../../services/api';
 
+type HomeParams = {
+  city: string;
+  uf: string;
+};
+
 const Points = () => {
   const navigator = useNavigation();
+  const route = useRoute();
+
+  const routeParams = route.params as HomeParams;
   const handleNavigationBack = () => {
     navigator.goBack();
   };
+
 
   const handleNavigationToDetail = (id: number) => {
     navigator.navigate('Detail', { point_id: id });
@@ -32,7 +41,8 @@ const Points = () => {
   useEffect(() => {
     api.get('/points', {
       params: {
-        city: 'Botucatu',
+        city: routeParams.city,
+        uf: routeParams.uf,
       },
     }).then(({ data }) => {
       setPoints(data);

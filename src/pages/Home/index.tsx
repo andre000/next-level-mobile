@@ -1,15 +1,39 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import { View, Image, StyleSheet, ImageBackground, Text } from 'react-native';
+import RNPickerSelect from 'react-native-picker-select';
 import { Feather as Icon } from '@expo/vector-icons';
 import { RectButton } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
+import locationApi from '../../services/locations';
 
 const Home = () => {
   const navigation = useNavigation();
 
   const handleNavigateToMap = () => {
-    navigation.navigate('Points');
+    navigation.navigate('Points', { city, uf });
   };
+
+  const [uf, setUF] = useState('0');
+  const [city, setCity] = useState('0');
+  const [ufList, setUfList] = useState<IBGEUFResponse[]>([]);
+  const [cityList, setCityList] = useState<IBGECityResponse[]>([]);
+
+  useEffect(() => {
+    locationApi.get('estados', {
+      params: { orderBy: 'nome' },
+    }).then(({ data }) => setUfList(data || []));
+  }, []);
+
+  useEffect(() => {
+    if (uf === '0') {
+      setCityList([]);
+      return;
+    }
+
+    locationApi.get(`estados/${uf}/municipios`, {
+      params: { orderBy: 'nome' },
+    }).then(({ data }) => setCityList(data || []));
+  }, [uf]);
 
   return (
     <ImageBackground
@@ -24,6 +48,23 @@ const Home = () => {
       </View>
 
       <View style={styles.footer}>
+        <RNPickerSelect
+          onValueChange={(v) => setUF(v)}
+          value={uf}
+          items={[
+            { value: '0', label: 'Selecione um Estado' },
+            ...ufList.map((u) => ({ label: u.nome, value: u.sigla }))
+          ]}
+        />
+        <RNPickerSelect
+          onValueChange={(v) => setCity(v)}
+          value={city}
+          items={[
+            { value: '0', label: 'Selecione uma Cidade' },
+            ...cityList.map((c) => ({ label: c.nome, value: c.nome }))
+          ]}
+        />
+
         <RectButton style={styles.button} onPress={handleNavigateToMap}>
           <View style={styles.buttonIcon}>
             <Icon name="arrow-right" color="#fff" size={24}></Icon>
